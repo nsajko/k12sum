@@ -430,7 +430,6 @@ m14(FILE *inMsg, const char *custStr, long custStrLen, size_t outLen) {
 }
 */
 
-/*
 int
 main(int argc, char *argv[]) {
 	static char stdioBuf[stdioBufSize];
@@ -440,55 +439,5 @@ main(int argc, char *argv[]) {
 	//k12(stdin, "", 0, 32);
 	k12(stdin, "", 0, 10032);
 	//shake128(stdin, 32);
-	return 0;
-}
-*/
-
-#include "/home/nsajko/crypto_hash/k12/kcp/reference1600/KangarooTwelve.h"
-
-int
-LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataSize) {
-	if (dataSize < sizeof(uint32_t) + sizeof(uint16_t)) {
-		return 0;
-	}
-
-	uint32_t custStrDataRatio;
-	memcpy(&custStrDataRatio, data, sizeof(custStrDataRatio));
-	data = &(data[sizeof(custStrDataRatio)]);
-	dataSize -= sizeof(custStrDataRatio);
-
-	uint16_t outLen;
-	memcpy(&outLen, data, sizeof(outLen));
-	data = &(data[sizeof(outLen)]);
-	dataSize -= sizeof(outLen);
-
-	if (0x80000000U < custStrDataRatio) {
-		custStrDataRatio >>= 1;
-	}
-	outLen &= 0x7fffU;
-	if (outLen == 0) {
-		outLen = 1;
-	}
-
-	const unsigned char *custStr = data;
-	size_t custStrLen = dataSize * (size_t)custStrDataRatio / 0x80000000UL;
-	data = &(data[custStrLen]);
-	dataSize -= custStrLen;
-
-	unsigned char *myFuncOut = malloc(outLen);
-	unsigned char *refFuncOut = malloc(outLen);
-
-	if (KangarooTwelve(data, dataSize, refFuncOut, outLen, custStr, custStrLen)) {
-		__builtin_trap();
-	}
-	k12(data, dataSize, custStr, custStrLen, myFuncOut, outLen);
-
-	if (0 != memcmp(myFuncOut, refFuncOut, outLen)) {
-		__builtin_trap();
-	}
-
-	free(refFuncOut);
-	free(myFuncOut);
-
 	return 0;
 }
